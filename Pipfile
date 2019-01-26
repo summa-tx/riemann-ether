@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[dev-packages]
+ipython = "*"
+mypy = "*"
+
+[packages]
+pycryptodomex = "*"
+eth-abi = "*"
+eth-keys = "*"
+eth-account = "*"
+
+[requires]
+python_version = "3.6"
