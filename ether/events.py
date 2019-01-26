@@ -2,6 +2,7 @@ import eth_abi
 
 from ether import crypto
 
+from ether.ether_types import EthABI
 from typing import Any, Dict, List
 
 
@@ -94,7 +95,7 @@ def process_value(t: str, v: str):
 
 def decode_event(
         encoded_event: Dict[str, Any],
-        abi: List[Dict[str, Any]]) -> Dict[str, Any]:
+        abi: EthABI) -> Dict[str, Any]:
     '''
     Decodes an event using the provide abi
     Args:

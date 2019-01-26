@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Any, Dict, List, Tuple
 from mypy_extensions import TypedDict
 
 SignedEthTx = TypedDict(
@@ -31,3 +31,5 @@ UnsignedEthTx = TypedDict(
 
 
 EthSig = Tuple[int, int, int]
+
+EthABI = List[Dict[str, Any]]
