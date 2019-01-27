@@ -6,6 +6,7 @@ name = "pypi"
 [dev-packages]
 ipython = "*"
 mypy = "*"
+riemann-ether = {path = ".", editable = true}
 
 [packages]
 pycryptodomex = "*"
