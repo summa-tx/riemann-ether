@@ -1,3 +1,4 @@
+from eth_utils import to_checksum_address
 from eth_account import Account
 from eth_account.internal import transactions
 
@@ -7,8 +8,12 @@ from typing import cast, Union
 
 
 def get_signature(tx: UnsignedEthTx, key: bytes) -> EthSig:
-
-    t = Account.signTransaction(tx, key)
+    '''
+    Gets a signature for an ethereum transaction under a specified key
+    '''
+    tmp_tx = tx.copy()
+    tmp_tx['to'] = to_checksum_address(tx['to'])
+    t = Account.signTransaction(tmp_tx, key)
 
     return t['v'], t['r'], t['s']
 
@@ -16,6 +21,9 @@ def get_signature(tx: UnsignedEthTx, key: bytes) -> EthSig:
 def sign_transaction(
         tx: UnsignedEthTx,
         key: bytes) -> SignedEthTx:
+    '''
+    Signs an ethereum transaction with a specified key
+    '''
 
     sig = get_signature(tx, key)
 
@@ -26,7 +34,17 @@ def sign_transaction(
 
 
 def serialize(tx: SignedEthTx) -> str:
+    '''
+    serialize a signed Ethereum transaction
+    '''
     temp_tx = tx.copy()
+
+    # NB: serializer wants bytes ¯\_(ツ)_/¯
+    #     strip prefix and convert to bytes
+    if 'x' in temp_tx['to']:
+        temp_tx['to'] = bytes.fromhex(temp_tx['to'][2:])
+    else:
+        temp_tx['to'] = bytes.fromhex(temp_tx['to'])
 
     temp_tx_obj = transactions.Transaction.from_dict(temp_tx)
 
@@ -34,10 +52,15 @@ def serialize(tx: SignedEthTx) -> str:
     r = temp_tx.pop('r')
     s = temp_tx.pop('s')
 
+    # NB: the serializer wants the signature passed through
+    #     both inside AND outside the object ಠ_ಠ
     return transactions.encode_transaction(temp_tx_obj, (v, r, s)).hex()
 
 
 def recover_sender(tx: Union[SignedEthTx, str]) -> str:
+    '''
+    Recover the sender from a signed ethereum transaction
+    '''
     if type(tx) == dict:
         t = serialize(cast(SignedEthTx, tx))
     else:
