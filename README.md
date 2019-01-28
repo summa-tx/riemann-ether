@@ -4,6 +4,10 @@ This is a simple library for building, signing, and reading logs from Ether tran
 
 It is in early stages of development
 
+### Development
+
+Clone and then run `pipenv install`
+
 #### Basic Usage
 
 ```python
