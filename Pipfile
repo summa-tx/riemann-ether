@@ -8,6 +8,7 @@ ipython = "*"
 mypy = "*"
 riemann-ether = {path = ".", editable = true}
 twine = "*"
+pytest = "*"
 
 [packages]
 pycryptodomex = "*"
