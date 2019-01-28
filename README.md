@@ -36,7 +36,7 @@ tx_data = calldata.call('transfer', ['0x' + '20' * 20, 60000000], abi)
 
 ```python
 import json
-from ether import event
+from ether import events
 
 event = {'data': '0xdeadbeef'}  # event dict from api or wherever
 abi = json.loads('SOME_ABI_DATA_HERE')
