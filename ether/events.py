@@ -126,4 +126,6 @@ def decode_event(
     for k, v in zip([t['name'] for t in unindexed], unindexed_values):
         ret[k] = v
 
+    ret['event_name'] = event_abi['name']
+
     return ret
