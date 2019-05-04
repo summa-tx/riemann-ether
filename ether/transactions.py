@@ -27,17 +27,21 @@ def sign_transaction(
 
     sig = get_signature(tx, key)
 
-    tmp_dict = tx.copy()
-    tmp_dict.pop('chainId')
-
-    return SignedEthTx(v=sig[0], r=sig[1], s=sig[2], **tmp_dict)
+    return SignedEthTx(
+        to=tx['to'],
+        value=tx['value'],
+        gas=tx['gas'],
+        gasPrice=tx['gasPrice'],
+        nonce=tx['nonce'],
+        data=tx['data'],
+        v=sig[0], r=sig[1], s=sig[2])
 
 
 def serialize(tx: SignedEthTx) -> str:
     '''
     serialize a signed Ethereum transaction
     '''
-    temp_tx = tx.copy()
+    temp_tx = cast(dict, tx.copy())
 
     # NB: serializer wants bytes ¯\_(ツ)_/¯
     #     strip prefix and convert to bytes

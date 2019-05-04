@@ -6,7 +6,7 @@ name = "pypi"
 [dev-packages]
 ipython = "*"
 mypy = "*"
-riemann-ether = {path = ".", editable = true}
+riemann-ether = {path = ".",editable = true}
 twine = "*"
 pytest = "*"
 
@@ -15,6 +15,7 @@ pycryptodomex = "*"
 eth-abi = "==1.3.0"
 eth-keys = "==0.2.1"
 eth-account = "==0.3.0"
+websockets = "*"
 
 [requires]
 python_version = "3.6"

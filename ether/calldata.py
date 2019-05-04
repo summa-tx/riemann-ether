@@ -61,7 +61,7 @@ def matches_args(
 
 def find_function(
         function_name: str,
-        function_args: List[any],
+        function_args: List[Any],
         abi: EthABI) -> Dict[str, Any]:
     '''
     Find a function within the ABI based on
