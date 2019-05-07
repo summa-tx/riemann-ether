@@ -47,3 +47,14 @@ abi = json.loads('SOME_ABI_DATA_HERE')
 
 decoded_event = events.decode_event(event, abi)
 ```
+
+```python
+from ether import infura
+async def do_the_thing():
+    await infura.make_client('mainnet', 'YOUR_PROJECT_ID')
+    balance = await infura.get_balance(address='0x00000...', network='mainnet')
+    logs = await infura.get_past_contract_logs(
+        address='0x000...',
+        topics=['0x...'],
+        network='mainnet')
+```
