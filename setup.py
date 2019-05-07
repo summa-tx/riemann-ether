@@ -5,12 +5,14 @@ from setuptools import setup, find_packages
 reqs = [
     'eth-abi==1.3.0',
     'eth-keys==0.2.1',
-    'eth-account==0.3.0'
+    'eth-account==0.3.0',
+    'pycryptodomex',
+    'websockets'
 ]
 
 setup(
     name='riemann-ether',
-    version='0.0.3',
+    version='0.0.4',
     description=('Transaction creation library for Ethereum'),
     url='https://github.com/summa-tx/riemann-ether',
     author='James Prestwich',
