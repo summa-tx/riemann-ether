@@ -209,6 +209,9 @@ async def get_logs(
     return await _RPC('eth_getLogs', [params], network)
 
 
-async def get_past_contract_logs(address: str, topics: Optional[List[str]]):
+async def get_past_contract_logs(
+        address: str,
+        topics: Optional[List[str]],
+        network: str = 'ropsten'):
     '''Simpler method to get contract logs'''
     return await get_logs(address=address, topics=topics)
