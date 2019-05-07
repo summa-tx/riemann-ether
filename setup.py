@@ -10,7 +10,7 @@ reqs = [
 
 setup(
     name='riemann-ether',
-    version='0.0.2',
+    version='0.0.3',
     description=('Transaction creation library for Ethereum'),
     url='https://github.com/summa-tx/riemann-ether',
     author='James Prestwich',
@@ -19,6 +19,7 @@ setup(
     install_requires=reqs,
     packages=find_packages(),
     package_dir={'ether': 'ether'},
+    package_data={'ether': ['py.typed']},
     keywords = 'ethereum cryptocurrency blockchain development',
     python_requires='>=3.6'
 )

@@ -22,9 +22,9 @@ def _id():
 
 
 URI = 'wss://{network}.infura.io/ws/v3/{project_id}'
-_SOCKETS: Dict[str, WebSocketClientProtocol] = {}
-_INFLIGHT: Dict[int, asyncio.Future] = {}
-_SUBSCRIPTIONS: Dict[str, asyncio.Queue] = {}
+_SOCKETS: Dict[str, WebSocketClientProtocol] = {}  # sockets open
+_INFLIGHT: Dict[int, asyncio.Future] = {}  # requests awaiting responses
+_SUBSCRIPTIONS: Dict[str, asyncio.Queue] = {}  # subscription queues
 _IDS = _id()
 
 
