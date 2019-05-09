@@ -126,7 +126,7 @@ async def _fake_subscribe(
         method: str,
         params: List,
         poll_time: int = 10,
-        network: str = 'ropsten') -> asyncio.Queue:
+        network: str = 'mainnet') -> asyncio.Queue:
     '''Turns an RPC call into a subscription by polling regularly'''
     q: asyncio.Queue = asyncio.Queue()
     task = _fake_sub_poller(q, method, params, poll_time, network)
@@ -139,7 +139,7 @@ async def _fake_sub_poller(
         method: str,
         params: List,
         poll_time: int = 10,
-        network: str = 'ropsten') -> None:
+        network: str = 'mainnet') -> None:
     '''poll for results and add them to the queue'''
     while True:
         try:
@@ -149,7 +149,7 @@ async def _fake_sub_poller(
             break
 
 
-async def unsubscribe(sub_ids: List[str], network: str = 'ropsten'):
+async def unsubscribe(sub_ids: List[str], network: str = 'mainnet'):
     '''Cancel a list of subscriptions'''
     return await _RPC('eth_unsubscribe', sub_ids, network)
 
@@ -157,7 +157,7 @@ async def unsubscribe(sub_ids: List[str], network: str = 'ropsten'):
 async def subscribe_to_address_events(
         addresses: List[str],
         topics: Optional[List[str]],
-        network: str = 'ropsten') -> Tuple[str, asyncio.Queue]:
+        network: str = 'mainnet') -> Tuple[str, asyncio.Queue]:
     '''Subscribes to event logs at specific addresses'''
     param_dict = {'address': addresses}
     if topics:
@@ -167,7 +167,7 @@ async def subscribe_to_address_events(
 
 
 async def subscribe_to_headers(
-        network: str = 'ropsten') -> Tuple[str, asyncio.Queue]:
+        network: str = 'mainnet') -> Tuple[str, asyncio.Queue]:
     '''Subscribes to new headers on the network'''
     return await _subscribe(['newHeads'], network)
 
@@ -175,7 +175,7 @@ async def subscribe_to_headers(
 async def get_balance(
         address: str,
         block: Union[str, int] = 'latest',
-        network: str = 'ropsten') -> int:
+        network: str = 'mainnet') -> int:
     '''Gets the number of wei at an address'''
     res = await _RPC(
         'eth_getBalance',
@@ -190,7 +190,7 @@ async def get_logs(
         to_block: Union[str, int] = 'latest',
         topics: Optional[List[str]] = None,
         blockhash: Optional[str] = None,
-        network: str = 'ropsten'):
+        network: str = 'mainnet'):
     '''Gets logs'''
     params: Dict[str, Union[str, List[str]]] = {}
 
@@ -212,6 +212,6 @@ async def get_logs(
 async def get_past_contract_logs(
         address: str,
         topics: Optional[List[str]],
-        network: str = 'ropsten'):
+        network: str = 'mainnet'):
     '''Simpler method to get contract logs'''
     return await get_logs(address=address, topics=topics)
