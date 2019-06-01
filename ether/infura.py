@@ -214,4 +214,4 @@ async def get_past_contract_logs(
         topics: Optional[List[str]],
         network: str = 'mainnet'):
     '''Simpler method to get contract logs'''
-    return await get_logs(address=address, topics=topics)
+    return await get_logs(address=address, topics=topics, network=network)
