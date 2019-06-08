@@ -1,3 +1,4 @@
+import ssl
 import json
 import asyncio
 import websockets
@@ -37,7 +38,7 @@ async def make_socket(
         return _SOCKETS[network]
     else:
         uri = URI.format(network=network, project_id=project_id)
-        ws = await websockets.connect(uri)
+        ws = await websockets.connect(uri, ssl=ssl.SSLContext())
         _SOCKETS[network] = ws
         asyncio.ensure_future(_ping(network, project_id, ws))
         asyncio.ensure_future(_handle_incoming(ws))
