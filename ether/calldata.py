@@ -2,7 +2,7 @@ import eth_abi
 
 from ether.crypto import keccak256
 
-from typing import Any, Dict, List
+from typing import Any, cast, Dict, List
 from ether.ether_types import EthABI
 
 
@@ -34,6 +34,26 @@ def make_selector(function: Dict[str, Any]) -> bytes:
     return keccak256(function_signature.encode('utf8'))[:4]
 
 
+def convert_bytes_types(
+        function: Dict[str, Any],
+        function_args: List[Any]) -> List[Any]:
+    '''
+    Converts any string-encoded bytes to bytestrings
+    Why doesn't eth_abi do this :(
+    '''
+    converted_args = []
+    inputs = function['inputs']
+    for i in range(len(function_args)):
+        if ('bytes' in inputs[i]['type']
+                and type(function_args[i]) is str
+                and function_args[i][:2] == '0x'):
+            converted_args.append(
+                bytes.fromhex(cast(str, function_args[i][2:])))
+        else:
+            converted_args.append(function_args[i])
+    return converted_args
+
+
 def encode_function_args(
         function: Dict[str, Any],
         function_args: List[Any]) -> bytes:
@@ -41,21 +61,26 @@ def encode_function_args(
     encodes function arguments into a data blob
     This gets prepended with the function selector
     '''
+    tmp_args = convert_bytes_types(function, function_args)
     return eth_abi.encode_single(
         make_type_list(function),
-        function_args)
+        tmp_args)
 
 
 def matches_args(
-        function,
-        function_args) -> bool:
+        function: Dict[str, Any],
+        function_args: List[Any]) -> bool:
     '''
     Checks whether eth_abi will encode each argument with the expected type
     '''
     for i in range(len(function_args)):
         inputs = function['inputs']
         if not eth_abi.is_encodable(inputs[i]['type'], function_args[i]):
-            return False
+            # account for hex-encoded bytes. why doesn't eth_abi do this?
+            if ('bytes' not in inputs[i]['type']
+                    or type(function_args[i]) is not str
+                    or function_args[i][:2] != '0x'):
+                return False
     return True
 
 
@@ -77,7 +102,6 @@ def find_function(
     if len(funcs) == 0:
         raise ValueError('no functions with acceptable interface')
     elif len(funcs) != 1:
-        print(funcs)
         raise ValueError('multiple functions with acceptable interface.')
     return funcs[0]
 
