@@ -11,6 +11,9 @@ def get_signature(tx: UnsignedEthTx, key: bytes) -> EthSig:
     '''
     Gets a signature for an ethereum transaction under a specified key
     '''
+    if not tx['chainId']:
+        raise ValueError('This library enforces EIP-155.')
+
     tmp_tx = tx.copy()
     tmp_tx['to'] = to_checksum_address(tx['to'])
     t = Account.signTransaction(tmp_tx, key)
@@ -24,7 +27,6 @@ def sign_transaction(
     '''
     Signs an ethereum transaction with a specified key
     '''
-
     sig = get_signature(tx, key)
 
     return SignedEthTx(

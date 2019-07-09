@@ -53,3 +53,13 @@ def compress_pubkey(pubkey: bytes) -> bytes:
 
 def priv_to_pub(privkey: bytes) -> bytes:
     return ecdsa.private_key_to_public_key(privkey)
+
+
+def pub_to_addr(pubkey: bytes) -> str:
+    '''Eth addr is last 20 bytes of keccak256 of pubkey'''
+    return '0x' + keccak256(pubkey)[-20:].hex()
+
+
+def priv_to_addr(privkey: bytes) -> str:
+    '''Make address from privkey'''
+    return pub_to_addr(priv_to_pub(privkey))
