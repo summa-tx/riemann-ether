@@ -75,7 +75,11 @@ async def _handle_incoming(ws: WebSocketClientProtocol) -> None:
             msg = await ws.recv()
             payload = json.loads(msg)
             # if it has a request ID, it's an RPC response
-            if 'id' in payload and payload['id'] in _INFLIGHT:
+            if 'error' in payload:
+                _INFLIGHT[payload['id']].set_exception(
+                    RuntimeError(str(payload['error'])))
+                continue
+            elif 'id' in payload and payload['id'] in _INFLIGHT:
                 _INFLIGHT[payload['id']].set_result(payload['result'])
             # otherwise it's a subscript notification
             # add it to the subscription's queue
@@ -204,8 +208,8 @@ async def get_logs(
     if blockhash:
         params['blockhash'] = blockhash
     else:
-        params['from_block'] = _encode_int(from_block)
-        params['to_block'] = _encode_int(to_block)
+        params['fromBlock'] = _encode_int(from_block)
+        params['toBlock'] = _encode_int(to_block)
 
     return await _RPC('eth_getLogs', [params], network)
 

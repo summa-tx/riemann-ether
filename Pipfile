@@ -6,7 +6,7 @@ name = "pypi"
 [dev-packages]
 ipython = "*"
 mypy = "*"
-riemann-ether = {path = ".",editable = true}
+riemann-ether = {editable = true,path = "."}
 twine = "*"
 pytest = "*"
 
