@@ -2,8 +2,13 @@ import eth_abi
 
 from ether import crypto
 
-from ether.ether_types import EthABI
-from typing import Any, Dict, List
+from typing import Any, cast, Dict, List
+from ether.ether_types import EthABI, ParsedEtherEvent, UnparsedEtherEvent
+
+
+def _zero_pad_address(addr: str):
+    '''Pads an address with 0s for event topics'''
+    return '0x' + '00' * 12 + addr[2:]
 
 
 def make_signature(event: Dict[str, Any]) -> str:
@@ -94,7 +99,7 @@ def process_value(t: str, v: str):
 
 
 def decode_event(
-        encoded_event: Dict[str, Any],
+        encoded_event: UnparsedEtherEvent,
         abi: EthABI) -> Dict[str, Any]:
     '''
     Decodes an event using the provide abi
@@ -129,3 +134,12 @@ def decode_event(
     ret['event_name'] = event_abi['name']
 
     return ret
+
+
+def parse_event_data(
+        encoded_event: UnparsedEtherEvent,
+        abi: EthABI) -> ParsedEtherEvent:
+    ''''''
+    tmp = cast(ParsedEtherEvent, encoded_event.copy())
+    tmp['data'] = decode_event(encoded_event, abi)
+    return tmp

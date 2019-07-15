@@ -3,6 +3,7 @@ import json
 import asyncio
 import websockets
 
+from ether.ether_types import UnparsedEtherEvent
 from typing import cast, Dict, List, Optional, Tuple, Union
 from websockets.client import WebSocketClientProtocol
 
@@ -195,7 +196,7 @@ async def get_logs(
         to_block: Union[str, int] = 'latest',
         topics: Optional[List[str]] = None,
         blockhash: Optional[str] = None,
-        network: str = 'mainnet'):
+        network: str = 'mainnet') -> List[UnparsedEtherEvent]:
     '''Gets logs'''
     params: Dict[str, Union[str, List[str]]] = {}
 
@@ -217,6 +218,6 @@ async def get_logs(
 async def get_past_contract_logs(
         address: str,
         topics: Optional[List[str]],
-        network: str = 'mainnet'):
+        network: str = 'mainnet') -> List[UnparsedEtherEvent]:
     '''Simpler method to get contract logs'''
     return await get_logs(address=address, topics=topics, network=network)
