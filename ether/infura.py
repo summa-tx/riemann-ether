@@ -221,3 +221,12 @@ async def get_past_contract_logs(
         network: str = 'mainnet') -> List[UnparsedEtherEvent]:
     '''Simpler method to get contract logs'''
     return await get_logs(address=address, topics=topics, network=network)
+
+
+async def broadcast(tx: str, network: str = 'mainnet') -> str:
+    if tx[0:2] != '0x':
+        tx = f'0x{tx}'
+    return await _RPC(
+        method='eth_sendRawTransaction',
+        params=[tx],
+        network=network)
