@@ -1,6 +1,6 @@
 import eth_abi
 
-from ether import crypto
+from ether import abi, crypto
 
 from typing import Any, cast, Dict, List
 from ether.ether_types import EthABI, ParsedEtherEvent, UnparsedEtherEvent
@@ -11,20 +11,7 @@ def _zero_pad_address(addr: str):
     return '0x' + '00' * 12 + addr[2:]
 
 
-def make_signature(event: Dict[str, Any]) -> str:
-    '''
-    Parses the ABI into an event signture
-
-    Args:
-        event (dict): the event ABI
-    Returns:
-        (str): the signature
-    '''
-    types = ','.join([t['type'] for t in event['inputs']])
-    return '{name}({types})'.format(name=event['name'], types=types)
-
-
-def make_topic0(event: Dict[str, Any]) -> str:
+def _make_topic0(event: Dict[str, Any]) -> str:
     '''
     Calculates the event topic hash frrom the event ABI
     Args:
@@ -32,11 +19,12 @@ def make_topic0(event: Dict[str, Any]) -> str:
     Returns:
         (str): the event topic as 0x prepended hex
     '''
-    topic_hex = crypto.keccak256(make_signature(event).encode('utf8')).hex()
+    signature = abi.make_signature(event).encode('utf8')
+    topic_hex = crypto.keccak256(signature).hex()
     return '0x{}'.format(topic_hex)
 
 
-def match_topic0_to_event(
+def _match_topic0_to_event(
         event_topic: str,
         events: List[Dict[str, Any]]) -> Dict[str, Any]:
     '''
@@ -47,12 +35,12 @@ def match_topic0_to_event(
         (dict): the event ABI
     '''
     for event in events:
-        if make_topic0(event) == event_topic:
+        if _make_topic0(event) == event_topic:
             return event
     raise ValueError('Topic not found')
 
 
-def find_indexed(event: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _find_indexed(event: Dict[str, Any]) -> List[Dict[str, Any]]:
     '''
     Finds indexed arguments
     Args:
@@ -63,7 +51,7 @@ def find_indexed(event: Dict[str, Any]) -> List[Dict[str, Any]]:
     return [t for t in event['inputs'] if t['indexed']]
 
 
-def find_unindexed(event: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _find_unindexed(event: Dict[str, Any]) -> List[Dict[str, Any]]:
     '''
     Finds indexed arguments
     Args:
@@ -74,7 +62,7 @@ def find_unindexed(event: Dict[str, Any]) -> List[Dict[str, Any]]:
     return [t for t in event['inputs'] if not t['indexed']]
 
 
-def process_value(t: str, v: str):
+def _process_value(t: str, v: str):
     '''
     Args:
         t (str): the type annotation
@@ -114,16 +102,16 @@ def decode_event(
     events = [entry for entry in abi if entry['type'] == 'event']
 
     # find the abi
-    event_abi = match_topic0_to_event(encoded_event['topics'][0], events)
+    event_abi = _match_topic0_to_event(encoded_event['topics'][0], events)
 
     # get the indexed args
-    indexed = find_indexed(event_abi)
+    indexed = _find_indexed(event_abi)
     for i in range(len(indexed)):
         signature = indexed[i]
-        val = process_value(signature['type'], encoded_event['topics'][i + 1])
+        val = _process_value(signature['type'], encoded_event['topics'][i + 1])
         ret[signature['name']] = val
 
-    unindexed = find_unindexed(event_abi)
+    unindexed = _find_unindexed(event_abi)
     unindexed_values = eth_abi.decode_abi(
         [t['type'] for t in unindexed],
         bytes.fromhex(encoded_event['data'][2:]))
@@ -138,8 +126,8 @@ def decode_event(
 
 def parse_event_data(
         encoded_event: UnparsedEtherEvent,
-        abi: EthABI) -> ParsedEtherEvent:
-    ''''''
+        contract_abi: EthABI) -> ParsedEtherEvent:
+    '''Parses an event given a contract ABI'''
     tmp = cast(ParsedEtherEvent, encoded_event.copy())
-    tmp['data'] = decode_event(encoded_event, abi)
+    tmp['data'] = decode_event(encoded_event, contract_abi)
     return tmp

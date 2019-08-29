@@ -1,40 +1,12 @@
 import eth_abi
 
-from ether.crypto import keccak256
+from ether import abi
 
 from typing import Any, cast, Dict, List
 from ether.ether_types import EthABI
 
 
-def make_type_list(function: Dict[str, Any]) -> str:
-    '''
-    makes a comma-delimted type list
-    for use in the signature and encoding
-    e.g. '(bytes,bytes,bytes)'
-    '''
-    return '({})'.format(
-        ','.join(t['type'] for t in function['inputs']))
-
-
-def make_signature(function: Dict[str, Any]) -> str:
-    '''
-    Makes the function signature
-    e.g. transfer(address,value)
-    '''
-    return '{name}{types}'.format(
-        name=function['name'],
-        types=make_type_list(function))
-
-
-def make_selector(function: Dict[str, Any]) -> bytes:
-    '''
-    makes the 4-byte function selector for encoding data blobs
-    '''
-    function_signature = make_signature(function)
-    return keccak256(function_signature.encode('utf8'))[:4]
-
-
-def convert_bytes_types(
+def _convert_bytes_types(
         function: Dict[str, Any],
         function_args: List[Any]) -> List[Any]:
     '''
@@ -54,20 +26,20 @@ def convert_bytes_types(
     return converted_args
 
 
-def encode_function_args(
+def _encode_function_args(
         function: Dict[str, Any],
         function_args: List[Any]) -> bytes:
     '''
     encodes function arguments into a data blob
     This gets prepended with the function selector
     '''
-    tmp_args = convert_bytes_types(function, function_args)
+    tmp_args = _convert_bytes_types(function, function_args)
     return eth_abi.encode_single(
-        make_type_list(function),
+        abi.make_type_list(function),
         tmp_args)
 
 
-def matches_args(
+def _matches_args(
         function: Dict[str, Any],
         function_args: List[Any]) -> bool:
     '''
@@ -84,7 +56,7 @@ def matches_args(
     return True
 
 
-def find_function(
+def _find_function(
         function_name: str,
         function_args: List[Any],
         abi: EthABI) -> Dict[str, Any]:
@@ -97,7 +69,7 @@ def find_function(
     funcs = [e for e in abi if e['type'] == 'function']
     funcs = [f for f in funcs if f['name'] == function_name]
     funcs = [f for f in funcs if len(f['inputs']) == len(function_args)]
-    funcs = [f for f in funcs if matches_args(f, function_args)]
+    funcs = [f for f in funcs if _matches_args(f, function_args)]
 
     if len(funcs) == 0:
         raise ValueError('no functions with acceptable interface')
@@ -111,13 +83,13 @@ def encode_call(function: Dict[str, Any], function_args: List[Any]) -> bytes:
     Makes the data blob for a solidity contract function call
     This is a 4 byte selector, and then any number of bytes
     '''
-    return (make_selector(function)
-            + encode_function_args(function, function_args))
+    return (abi.make_selector(function)
+            + _encode_function_args(function, function_args))
 
 
 def call(function_name: str, function_args: List[Any], abi: EthABI) -> bytes:
     '''
     Call a function by name
     '''
-    function = find_function(function_name, function_args, abi)
+    function = _find_function(function_name, function_args, abi)
     return encode_call(function, function_args)

@@ -17,7 +17,7 @@ class TestABI(unittest.TestCase):
 
     def test_match_topic0_to_event(self):
         with self.assertRaises(ValueError) as context:
-            events.match_topic0_to_event(
+            events._match_topic0_to_event(
                 'nope',
                 [e for e in helpers.weth_json if e['type'] == 'event'])
         self.assertIn('Topic not found', str(context.exception))
@@ -31,5 +31,5 @@ class TestABI(unittest.TestCase):
             (('bool', '00' * 32), False))
         for v in test_vectors:
             self.assertEqual(
-                events.process_value(*v[0]),
+                events._process_value(*v[0]),
                 v[1])
