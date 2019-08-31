@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from mypy_extensions import TypedDict
 
 EthSig = Tuple[int, int, int]
@@ -45,3 +45,24 @@ class UnparsedEtherEvent(EtherEvent):
 
 class ParsedEtherEvent(EtherEvent):
     data: Dict[str, Any]
+
+
+# we declare it in this style because "from" is a keyword
+Receipt = TypedDict(
+    'Receipt',
+    {
+        'blockHash': str,
+        'blockNumber': str,
+        'contractAddress': Optional[str],
+        'cumulativeGasUsed': str,
+        'from': str,
+        'gasUsed': str,
+        'logs': List[EtherEvent],
+        'logsBloom': str,
+        'status': str,
+        'to': str,
+        'transactionHash': str,
+        'transactionIndex': str
+
+    }
+)

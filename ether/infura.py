@@ -3,7 +3,7 @@ import json
 import asyncio
 import websockets
 
-from ether.ether_types import UnparsedEtherEvent
+from ether.ether_types import Receipt, UnparsedEtherEvent
 from typing import cast, Dict, List, Optional, Tuple, Union
 from websockets.client import WebSocketClientProtocol
 
@@ -224,9 +224,32 @@ async def get_past_contract_logs(
 
 
 async def broadcast(tx: str, network: str = 'mainnet') -> str:
+    '''Broadcast a transaction to the network'''
     if tx[0:2] != '0x':
         tx = f'0x{tx}'
     return await _RPC(
         method='eth_sendRawTransaction',
         params=[tx],
         network=network)
+
+
+async def get_tx_receipt(
+        tx_id: str,
+        network: str = 'mainnet') -> Optional[Receipt]:
+    '''Get the receipt of a transaction. None if not confirmed'''
+    if tx_id[:2] != '0x':
+        tx_id = f'0x{tx_id}'
+
+    return await _RPC(
+        method='eth_getTransactionReceipt',
+        params=[tx_id],
+        network=network)
+
+
+async def get_nonce(account: str, network: str = 'mainnet') -> int:
+    res = await _RPC(
+        method='eth_getTransactionCount',
+        params=[account, 'pending'],
+        network=network)
+    appropriate_nonce = int(res, 16)
+    return appropriate_nonce
