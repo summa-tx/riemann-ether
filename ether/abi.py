@@ -16,7 +16,7 @@ def make_type_list(f: Dict[str, Any]) -> str:
 
 
 def find(name: str, interface: EthABI) -> List[Dict[str, Any]]:
-    return [e for e in interface if e['name'] == name]
+    return [e for e in interface if 'name' in e and e['name'] == name]
 
 
 def make_signature(f: Dict[str, Any]) -> str:
