@@ -3,9 +3,11 @@ import json
 import asyncio
 import websockets
 
-from ether.ether_types import Receipt, UnparsedEtherEvent
-from typing import cast, Dict, List, Optional, Tuple, Union
+from ether import transactions
+
 from websockets.client import WebSocketClientProtocol
+from typing import cast, Dict, List, Optional, Tuple, Union
+from ether.ether_types import EthTx, Receipt, SignedEthTx, UnparsedEtherEvent
 
 
 def _encode_int(number: Union[str, int]) -> str:
@@ -194,7 +196,7 @@ async def get_logs(
         address: Optional[str] = None,
         from_block: Union[str, int] = 'earliest',
         to_block: Union[str, int] = 'latest',
-        topics: Optional[List[str]] = None,
+        topics: Optional[List[Optional[str]]] = None,
         blockhash: Optional[str] = None,
         network: str = 'mainnet') -> List[UnparsedEtherEvent]:
     '''Gets logs'''
@@ -217,7 +219,7 @@ async def get_logs(
 
 async def get_past_contract_logs(
         address: str,
-        topics: Optional[List[str]],
+        topics: Optional[List[Optional[str]]],
         network: str = 'mainnet') -> List[UnparsedEtherEvent]:
     '''Simpler method to get contract logs'''
     return await get_logs(address=address, topics=topics, network=network)
@@ -253,3 +255,27 @@ async def get_nonce(account: str, network: str = 'mainnet') -> int:
         network=network)
     appropriate_nonce = int(res, 16)
     return appropriate_nonce
+
+
+async def preflight_tx(
+        tx: EthTx,
+        sender: Optional[str] = None,
+        network: str = 'mainnet'):
+    '''Preflight a transaction'''
+    if sender is None and 'v' in tx:
+        sender = transactions.recover_sender(cast(SignedEthTx, tx))
+    else:
+        sender = '0x' + '11' * 20
+
+    res = await _RPC(
+        method='eth_call',
+        params=[
+            {
+                'from': sender,
+                'to': tx['to'],
+                'data': f'0x{tx["data"].hex()}'
+            },
+            'latest'  # block height parameter
+        ],
+        network=network)
+    return res

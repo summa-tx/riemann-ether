@@ -6,25 +6,22 @@ EthSig = Tuple[int, int, int]
 EthABI = List[Dict[str, Any]]
 
 
-class SignedEthTx(TypedDict):
+class EthTx(TypedDict):
     to: str
     value: int
     gas: int
     gasPrice: int
     nonce: int
     data: bytes
+
+
+class SignedEthTx(EthTx):
     v: int
     s: int
     r: int
 
 
-class UnsignedEthTx(TypedDict):
-    to: str
-    value: int
-    gas: int
-    gasPrice: int
-    nonce: int
-    data: bytes
+class UnsignedEthTx(EthTx):
     chainId: int
 
 
