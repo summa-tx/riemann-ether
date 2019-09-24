@@ -32,6 +32,18 @@ _SUBSCRIPTIONS: Dict[str, asyncio.Queue] = {}  # subscription queues
 _IDS = _id()
 
 
+async def close_socket(ws: WebSocketClientProtocol) -> None:
+    await ws.close()
+
+
+async def close_sockets() -> None:
+    '''close all open connections'''
+    global _SOCKETS
+    tmp = _SOCKETS
+    _SOCKETS = {}
+    await asyncio.gather(*[close_socket(tmp[n]) for n in tmp])
+
+
 async def make_socket(
         network: str,
         project_id: str) -> WebSocketClientProtocol:
@@ -43,7 +55,7 @@ async def make_socket(
         uri = URI.format(network=network, project_id=project_id)
         ws = await websockets.connect(uri, ssl=ssl.SSLContext())
         _SOCKETS[network] = ws
-        asyncio.ensure_future(_ping(network, project_id, ws))
+        asyncio.ensure_future(_ping(ws))
         asyncio.ensure_future(_handle_incoming(ws))
 
 
@@ -55,10 +67,10 @@ async def _get_socket(
     return _SOCKETS[network]
 
 
-async def _ping(network: str, project_id: str, ws) -> None:
+async def _ping(
+        ws: WebSocketClientProtocol) -> None:
     '''
     Periodically pings the websocket to keep it alive
-    Attempts to make a new connection if it dies
     '''
     global _SOCKETS
     while True:
@@ -66,8 +78,6 @@ async def _ping(network: str, project_id: str, ws) -> None:
             await ws.ping()
             await asyncio.sleep(15)
         except websockets.exceptions.ConnectionClosed:
-            _SOCKETS.pop(network)
-            await make_socket(network, project_id)
             break
 
 
@@ -200,7 +210,7 @@ async def get_logs(
         blockhash: Optional[str] = None,
         network: str = 'mainnet') -> List[UnparsedEtherEvent]:
     '''Gets logs'''
-    params: Dict[str, Union[str, List[str]]] = {}
+    params: Dict[str, Union[str, List[Optional[str]]]] = {}
 
     if address:
         params['address'] = address
