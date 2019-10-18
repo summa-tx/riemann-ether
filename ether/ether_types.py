@@ -1,5 +1,8 @@
-from typing import Any, Dict, List, Optional, Tuple
+import asyncio
+
+from asyncio import Future
 from mypy_extensions import TypedDict
+from typing import Any, Dict, List, Optional, Tuple
 
 EthSig = Tuple[int, int, int]
 
@@ -63,3 +66,15 @@ Receipt = TypedDict(
 
     }
 )
+
+
+class RPCRequest(TypedDict):
+    method: str
+    params: List
+    fut: Future
+
+
+class RPCSubscription(TypedDict):
+    method: str
+    params: List
+    queue: asyncio.Queue

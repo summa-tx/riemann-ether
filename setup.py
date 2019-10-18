@@ -12,7 +12,7 @@ reqs = [
 
 setup(
     name='riemann-ether',
-    version='3.0.0',
+    version='4.0.0',
     description=('Transaction creation library for Ethereum'),
     url='https://github.com/summa-tx/riemann-ether',
     author='James Prestwich',
