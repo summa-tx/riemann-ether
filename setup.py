@@ -17,11 +17,14 @@ setup(
     url='https://github.com/summa-tx/riemann-ether',
     author='James Prestwich',
     author_email='james@summa.one',
-    license='LGPLv3.0',
     install_requires=reqs,
     packages=find_packages(),
     package_dir={'ether': 'ether'},
     package_data={'ether': ['py.typed']},
     keywords = 'ethereum cryptocurrency blockchain development',
-    python_requires='>=3.6'
+    python_requires='>=3.6',
+    classifiers=[
+        'License :: OSI Approved :: GNU Lesser General Public License v3
+(LGPLv3)'
+    ]
 )
