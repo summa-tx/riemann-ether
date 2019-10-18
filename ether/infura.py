@@ -49,14 +49,14 @@ async def make_socket(
         project_id: str) -> WebSocketClientProtocol:
     '''Sets up a new socket for the network, and registers ping and handler'''
     global _SOCKETS
-    if network in _SOCKETS:
-        return _SOCKETS[network]
-    else:
+    if network not in _SOCKETS:
         uri = URI.format(network=network, project_id=project_id)
         ws = await websockets.connect(uri, ssl=ssl.SSLContext())
         _SOCKETS[network] = ws
         asyncio.ensure_future(_ping(ws))
         asyncio.ensure_future(_handle_incoming(ws))
+
+    return _SOCKETS[network]
 
 
 async def _get_socket(
