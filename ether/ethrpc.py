@@ -246,7 +246,11 @@ class WSRPC(BaseRPC):
 
     async def close(self) -> None:
         '''Close the socket and cancel associated tasks'''
+        if not hasattr(self, '_ws'):
+            return
+
         await self._ws.close()
+
         if not self.connected:
             return
         self.connected = False
