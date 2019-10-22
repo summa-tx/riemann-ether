@@ -217,8 +217,8 @@ class WSRPC(BaseRPC):
 
     async def _handle_incoming(self) -> None:
         '''Router for incoming messages. Distributes them to futures/queues'''
-        while True:
-            try:
+        try:
+            while True:
                 msg = await self._ws.recv()
                 payload = json.loads(msg)
                 # if it has a request ID, it's an RPC response
@@ -236,15 +236,20 @@ class WSRPC(BaseRPC):
                     sub_id = payload['params']['subscription']
                     q = self._subscriptions[sub_id]['queue']
                     await q.put(payload['params']['result'])
-            except websockets.exceptions.ConnectionClosed:
-                break
-        # if the forloop breaks due to a connection closed error
-        await self.close()
+        except websockets.exceptions.ConnectionClosed:
+            if self.connected:
+                # if the forloop breaks due to a connection closed error
+                await self.close()
+
+        except asyncio.CancelledError:
+            pass
 
     async def close(self) -> None:
         '''Close the socket and cancel associated tasks'''
-        self.connected = False
         await self._ws.close()
+        if not self.connected:
+            return
+        self.connected = False
         self._ping_task.cancel()
         self._handle_task.cancel()
         await asyncio.gather(
@@ -302,11 +307,12 @@ class WSRPC(BaseRPC):
         return new
 
     async def _ping(self):
-        while True:
-            try:
+        try:
+            while True:
                 await self._ws.ping()
                 await asyncio.sleep(15)
-            except websockets.exceptions.ConnectionClosed:
+        except websockets.exceptions.ConnectionClosed:
+            if self.connected:
                 await self.close()
 
     async def _RPC(
@@ -337,8 +343,9 @@ class WSRPC(BaseRPC):
         try:
             await self._ws.send(json.dumps(payload))
         except websockets.exceptions.ConnectionClosed:
-            await self.close()
-            raise RuntimeError('Websocket connection closed')
+            if self.connected:
+                await self.close()
+            raise RuntimeError('Websocket connection closed unexpectedly')
 
         # await the result
         res = await future
