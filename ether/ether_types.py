@@ -18,14 +18,31 @@ class EthTx(TypedDict):
     data: bytes
 
 
+class CeloMod(TypedDict):
+    gasCurrency: Optional[str]
+    gasFeeRecipient: Optional[str]
+
+
+class CeloTx(EthTx, CeloMod):
+    ...
+
+
 class SignedEthTx(EthTx):
     v: int
     s: int
     r: int
 
 
+class SignedCeloTx(SignedEthTx, CeloMod):
+    ...
+
+
 class UnsignedEthTx(EthTx):
     chainId: int
+
+
+class UnsignedCeloTx(UnsignedEthTx, CeloMod):
+    ...
 
 
 class EtherEvent(TypedDict):

@@ -3,12 +3,18 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+[scripts]
+test = "./scripts/run_tests.sh"
+
 [dev-packages]
 ipython = "*"
 mypy = "*"
 riemann-ether = {editable = true,path = "."}
 twine = "*"
-pytest = "*"
+flake8 = "*"
+coverage = "*"
+pytest-cov = "*"
+
 
 [packages]
 eth-abi = "==1.3.0"

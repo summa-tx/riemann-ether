@@ -33,9 +33,13 @@ def get_client(
         network (str): mainnet, ropsten, rinkeby, etc.
         force_https (bool): set true to disable websockets
     '''
-    if 'infura_key' in kwargs:
+    use_infura = 'infura_key' in kwargs \
+                 and kwargs['infura_key'] is not None \
+                 and len(kwargs['infura_key'] > 0)
+    force_https = 'force_https' in kwargs and kwargs['force_https']
+    if use_infura:
         return InfuraWSRPC(network=network, **kwargs)
-    if 'infura_key' in kwargs and 'force_https' in kwargs:
+    if use_infura and force_https:
         return InfuraHTTPRPC(network=network, **kwargs)
 
     uri = ''
@@ -43,8 +47,7 @@ def get_client(
         uri = kwargs['uri']
     else:
         raise ValueError('Must specify URI or infura key')
-    if uri[0:3] == 'wss' and (
-            'force_https' not in kwargs or not kwargs['force_https']):
+    if uri[0:3] == 'wss' and force_https:
         return WSRPC(uri, network, **kwargs)
     return HTTPRPC(uri, network, **kwargs)
 
@@ -94,8 +97,35 @@ class BaseRPC(metaclass=abc.ABCMeta):
         return v
 
     @staticmethod
-    def _prep_params(params: List[Any]) -> List[Any]:
+    def _shallow_prep_params(params: List[Any]) -> List[Any]:
         return list(map(BaseRPC._encode_int, params))
+
+    async def send_transaction(
+            self,
+            from_addr: str,
+            tx: EthTx) -> str:
+        '''Send a transaction, let the node sign it if it wants'''
+        if hasattr(self, 'infura_key'):
+            raise RuntimeError('Tried to sign tx with infura connection')
+
+        param_obj = cast(dict, tx.copy())
+        param_obj['from'] = from_addr
+
+        if 'data' in param_obj:
+            param_obj['data'] = param_obj['data'].hex()
+
+        if 'chainId' in param_obj:
+            param_obj.pop('chainId')
+
+        for key, value in param_obj.items():
+            param_obj[key] = BaseRPC._encode_int(value)
+
+        res = await self._RPC(
+            method='eth_sendTransaction',
+            params=[param_obj]
+        )
+
+        return cast(res, str)
 
     async def get_balance(
             self,
@@ -432,7 +462,7 @@ class HTTPRPC(BaseRPC):
             "jsonrpc": "2.0",
             "id": next(self._ids),
             "method": method,
-            "params": BaseRPC._prep_params(params)}
+            "params": BaseRPC._shallow_prep_params(params)}
         resp = await self._session.post(self.uri, json=payload)
         if resp.status != 200:
             raise RuntimeError(f'Bad status during RPC request: {resp.status}')
