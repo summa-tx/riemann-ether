@@ -35,7 +35,7 @@ def get_client(
     '''
     use_infura = 'infura_key' in kwargs \
                  and kwargs['infura_key'] is not None \
-                 and len(kwargs['infura_key'] > 0)
+                 and len(kwargs['infura_key']) > 0
     force_https = 'force_https' in kwargs and kwargs['force_https']
     if use_infura:
         return InfuraWSRPC(network=network, **kwargs)
