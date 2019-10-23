@@ -8,6 +8,7 @@ import websockets
 from ether import transactions
 
 from asyncio import Future
+from logging import Logger
 from websockets.client import WebSocketClientProtocol
 from ether.ether_types import EthTx, Receipt, RPCRequest
 from ether.ether_types import RPCSubscription, SignedEthTx, UnparsedEtherEvent
@@ -68,6 +69,7 @@ class BaseRPC(metaclass=abc.ABCMeta):
             self,
             uri: str,
             network: str,
+            logger: Optional[Logger] = None,
             **kwargs) -> None:
 
         self._ids = _id(kwargs['_id'] if '_id' in kwargs else 0)
@@ -77,6 +79,24 @@ class BaseRPC(metaclass=abc.ABCMeta):
         self.network = network
         self.mode = uri[0:3]
         self.params = kwargs
+
+        self._logger = logger
+
+    def info(self, *args, **kwargs) -> None:
+        if self._logger is not None:
+            self._logger.info(*args, **kwargs)
+
+    def debug(self, *args, **kwargs) -> None:
+        if self._logger is not None:
+            self._logger.debug(*args, **kwargs)
+
+    def warn(self, *args, **kwargs) -> None:
+        if self._logger is not None:
+            self._logger.warn(*args, **kwargs)
+
+    def error(self, *args, **kwargs) -> None:
+        if self._logger is not None:
+            self._logger.error(*args, **kwargs)
 
     @abc.abstractmethod
     async def open(self):
@@ -112,7 +132,7 @@ class BaseRPC(metaclass=abc.ABCMeta):
         param_obj['from'] = from_addr
 
         if 'data' in param_obj:
-            param_obj['data'] = param_obj['data'].hex()
+            param_obj['data'] = f'0x{param_obj["data"].hex()}'
 
         if 'chainId' in param_obj:
             param_obj.pop('chainId')
@@ -373,7 +393,10 @@ class WSRPC(BaseRPC):
             'jsonrpc': '2.0',
             'id': req_id,
             'method': method,
-            'params': params}
+            'params': params
+        }
+
+        self.debug(f'dispatching ws payload {payload}')
         try:
             await self._ws.send(json.dumps(payload))
         except websockets.exceptions.ConnectionClosed:
@@ -463,6 +486,7 @@ class HTTPRPC(BaseRPC):
             "id": next(self._ids),
             "method": method,
             "params": BaseRPC._shallow_prep_params(params)}
+        self.debug(f'dispatching post request {payload}')
         resp = await self._session.post(self.uri, json=payload)
         if resp.status != 200:
             raise RuntimeError(f'Bad status during RPC request: {resp.status}')
