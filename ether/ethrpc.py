@@ -44,7 +44,7 @@ def get_client(
 
     uri = ''
     if 'uri' in kwargs:
-        uri = kwargs['uri']
+        uri = kwargs.pop('uri')
     else:
         raise ValueError('Must specify URI or infura key')
     if uri[0:3] == 'wss' and force_https:
