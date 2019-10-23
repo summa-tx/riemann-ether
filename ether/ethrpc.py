@@ -125,7 +125,7 @@ class BaseRPC(metaclass=abc.ABCMeta):
             params=[param_obj]
         )
 
-        return cast(res, str)
+        return cast(str, res)
 
     async def get_balance(
             self,
