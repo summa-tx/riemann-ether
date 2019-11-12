@@ -25,7 +25,7 @@ def _id(start: int) -> Generator[int, None, None]:
 
 def get_client(
         network: str,
-        **kwargs) -> 'BaseRPC':
+        **kwargs: Any) -> 'BaseRPC':
     '''
     Convenience method for getting a client.
     Prefer instantiating directly
@@ -70,7 +70,7 @@ class BaseRPC(metaclass=abc.ABCMeta):
             uri: str,
             network: str,
             logger: Optional[Logger] = None,
-            **kwargs) -> None:
+            **kwargs: Any) -> None:
 
         self._ids = _id(kwargs['_id'] if '_id' in kwargs else 0)
         self.connected = False
@@ -82,32 +82,32 @@ class BaseRPC(metaclass=abc.ABCMeta):
 
         self._logger = logger
 
-    def info(self, *args, **kwargs) -> None:
+    def info(self, *args: Any, **kwargs: Any) -> None:
         if self._logger is not None:
             self._logger.info(*args, **kwargs)
 
-    def debug(self, *args, **kwargs) -> None:
+    def debug(self, *args: Any, **kwargs: Any) -> None:
         if self._logger is not None:
             self._logger.debug(*args, **kwargs)
 
-    def warn(self, *args, **kwargs) -> None:
+    def warn(self, *args: Any, **kwargs: Any) -> None:
         if self._logger is not None:
             self._logger.warn(*args, **kwargs)
 
-    def error(self, *args, **kwargs) -> None:
+    def error(self, *args: Any, **kwargs: Any) -> None:
         if self._logger is not None:
             self._logger.error(*args, **kwargs)
 
     @abc.abstractmethod
-    async def open(self):
+    async def open(self) -> None:
         ...
 
     @abc.abstractmethod
-    async def close(self):
+    async def close(self) -> None:
         ...
 
     @abc.abstractmethod
-    async def _RPC(self, method: str, params: List):
+    async def _RPC(self, method: str, params: List) -> Any:
         ...
 
     @staticmethod
@@ -179,7 +179,9 @@ class BaseRPC(metaclass=abc.ABCMeta):
             params['fromBlock'] = BaseRPC._encode_int(from_block)
             params['toBlock'] = BaseRPC._encode_int(to_block)
 
-        return await self._RPC(method='eth_getLogs', params=[params])
+        events = await self._RPC(method='eth_getLogs', params=[params])
+
+        return cast(List[UnparsedEtherEvent], events)
 
     async def get_past_contract_logs(
             self,
@@ -193,9 +195,10 @@ class BaseRPC(metaclass=abc.ABCMeta):
         '''Broadcast a transaction to the network'''
         if tx[0:2] != '0x':
             tx = f'0x{tx}'
-        return await self._RPC(
+        result = await self._RPC(
             method='eth_sendRawTransaction',
             params=[tx])
+        return cast(str, result)
 
     async def get_tx_receipt(
             self,
@@ -204,9 +207,11 @@ class BaseRPC(metaclass=abc.ABCMeta):
         if tx_id[:2] != '0x':
             tx_id = f'0x{tx_id}'
 
-        return await self._RPC(
+        result = await self._RPC(
             method='eth_getTransactionReceipt',
             params=[tx_id])
+
+        return cast(Optional[Receipt], result)
 
     async def get_nonce(self, account: str) -> int:
         res = await self._RPC(
@@ -218,7 +223,7 @@ class BaseRPC(metaclass=abc.ABCMeta):
     async def preflight_tx(
             self,
             tx: EthTx,
-            sender: Optional[str] = None):
+            sender: Optional[str] = None) -> str:
         '''Preflight a transaction'''
         if sender is None and 'v' in tx:
             sender = transactions.recover_sender(cast(SignedEthTx, tx))
@@ -235,7 +240,7 @@ class BaseRPC(metaclass=abc.ABCMeta):
                 },
                 'latest'  # block height parameter
             ])
-        return res
+        return cast(str, res)
 
 
 class WSRPC(BaseRPC):
@@ -252,14 +257,14 @@ class WSRPC(BaseRPC):
             self,
             uri: str,
             network: str,
-            **kwargs) -> None:
+            **kwargs: Any) -> None:
         super().__init__(uri, network, **kwargs)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         '''Override repr to add connection status'''
         return f'{super().__repr__()}\tConnected: {self.connected}'
 
-    async def open(self):
+    async def open(self) -> None:
         self._ws = await websockets.connect(self.uri, ssl=ssl.SSLContext())
         self.connected = True
         self._ping_task = asyncio.ensure_future(self._ping())
@@ -339,7 +344,7 @@ class WSRPC(BaseRPC):
             start_id: int,
             pending: List[RPCRequest] = [],
             subs: List[RPCSubscription] = [],
-            **kwargs) -> 'WSRPC':
+            **kwargs: Any) -> 'WSRPC':
         '''
         Returns an open connection, using requests and subscriptions from
         another WSRPC instance. Subscriptions are restarted, and inflight reqs
@@ -360,7 +365,7 @@ class WSRPC(BaseRPC):
         asyncio.ensure_future(asyncio.gather(*new_subs))
         return new
 
-    async def _ping(self):
+    async def _ping(self) -> None:
         try:
             while True:
                 await self._ws.ping()
@@ -373,7 +378,7 @@ class WSRPC(BaseRPC):
             self,
             method: str,
             params: List,
-            fut: Optional[Future] = None):
+            fut: Optional[Future] = None) -> Any:
         '''Internal method for handling RPC calls'''
         # get a new ID and the websket
         req_id = next(self._ids)
@@ -431,13 +436,13 @@ class WSRPC(BaseRPC):
             queue=q)
         return sub_id, q
 
-    async def unsubscribe(self, sub_ids: List[str]):
+    async def unsubscribe(self, sub_ids: List[str]) -> bool:
         '''Cancel a list of subscriptions'''
 
         res = await self._RPC('eth_unsubscribe', sub_ids)
         for sub in sub_ids:
             self._subscriptions.pop(sub)
-        return res
+        return cast(bool, res)
 
     async def subscribe_to_address_events(
             self,
@@ -463,7 +468,7 @@ class HTTPRPC(BaseRPC):
             self,
             uri: str,
             network: str,
-            **kwargs) -> None:
+            **kwargs: Any) -> None:
         super().__init__(uri, network, **kwargs)
 
     async def open(self) -> None:
@@ -480,7 +485,7 @@ class HTTPRPC(BaseRPC):
         await self._session.close()
         self.connected = False
 
-    async def _RPC(self, method: str, params: List[Any]) -> Dict[str, Any]:
+    async def _RPC(self, method: str, params: List[Any]) -> Any:
         payload = {
             "jsonrpc": "2.0",
             "id": next(self._ids),
@@ -497,7 +502,7 @@ class HTTPRPC(BaseRPC):
 
 class InfuraHTTPRPC(HTTPRPC):
 
-    def __init__(self, network: str, infura_key: str, **kwargs) -> None:
+    def __init__(self, network: str, infura_key: str, **kwargs: Any) -> None:
         uri = f'https://{network}.infura.io/v3/{infura_key}'
         kwargs['uri'] = uri
         self.infura_key = infura_key
@@ -505,7 +510,7 @@ class InfuraHTTPRPC(HTTPRPC):
 
 
 class InfuraWSRPC(WSRPC):
-    def __init__(self, network: str, infura_key: str, **kwargs) -> None:
+    def __init__(self, network: str, infura_key: str, **kwargs: Any) -> None:
         uri = f'wss://{network}.infura.io/ws/v3/{infura_key}'
         kwargs['uri'] = uri
         self.infura_key = infura_key

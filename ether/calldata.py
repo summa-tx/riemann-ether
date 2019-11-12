@@ -34,9 +34,9 @@ def _encode_function_args(
     This gets prepended with the function selector
     '''
     tmp_args = _convert_bytes_types(function, function_args)
-    return eth_abi.encode_single(
+    return cast(bytes, eth_abi.encode_single(
         abi.make_type_list(function),
-        tmp_args)
+        tmp_args))
 
 
 def _matches_args(

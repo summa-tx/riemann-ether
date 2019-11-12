@@ -2,6 +2,8 @@ from Cryptodome.Hash import keccak
 
 from eth_keys.backends.native import ecdsa
 
+from typing import cast
+
 
 def keccak256(msg: bytes) -> bytes:
     '''
@@ -52,7 +54,7 @@ def compress_pubkey(pubkey: bytes) -> bytes:
 
 
 def priv_to_pub(privkey: bytes) -> bytes:
-    return ecdsa.private_key_to_public_key(privkey)
+    return cast(bytes, ecdsa.private_key_to_public_key(privkey))
 
 
 def pub_to_addr(pubkey: bytes) -> str:

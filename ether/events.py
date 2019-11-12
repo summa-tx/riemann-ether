@@ -2,11 +2,11 @@ import eth_abi
 
 from ether import abi, crypto
 
-from typing import Any, cast, Dict, List
+from typing import Any, cast, Dict, List, Union
 from ether.ether_types import EthABI, ParsedEtherEvent, UnparsedEtherEvent
 
 
-def _zero_pad_address(addr: str):
+def _zero_pad_address(addr: str) -> str:
     '''Pads an address with 0s for event topics'''
     return '0x' + '00' * 12 + addr[2:]
 
@@ -62,7 +62,7 @@ def _find_unindexed(event: Dict[str, Any]) -> List[Dict[str, Any]]:
     return [t for t in event['inputs'] if not t['indexed']]
 
 
-def _process_value(t: str, v: str):
+def _process_value(t: str, v: str) -> Union[str, int, bytes, bool]:
     '''
     Args:
         t (str): the type annotation
@@ -84,6 +84,7 @@ def _process_value(t: str, v: str):
         return int.from_bytes(bytes.fromhex(v), 'big', signed=True)
     elif t == 'bool':
         return t[-1] == '1'
+    raise ValueError(f'Could not deserialize type {t} with value {v}')
 
 
 def decode_event(

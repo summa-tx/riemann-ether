@@ -3,3 +3,6 @@ build
 dist
 .mypy_cache
 .pytest_cache
+.coverage
+htmlcov
+coverage

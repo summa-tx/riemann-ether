@@ -1,0 +1,10 @@
+[run]
+source = ether/
+omit =
+    bidder/tests/*
+
+[report]
+show_missing = True
+
+[html]
+directory = coverage/html/

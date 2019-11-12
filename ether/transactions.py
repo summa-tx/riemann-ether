@@ -60,7 +60,8 @@ def serialize(tx: SignedEthTx) -> str:
 
     # NB: the serializer wants the signature passed through
     #     both inside AND outside the object ಠ_ಠ
-    return transactions.encode_transaction(temp_tx_obj, (v, r, s)).hex()
+    raw = transactions.encode_transaction(temp_tx_obj, (v, r, s))
+    return cast(str, raw.hex())
 
 
 def recover_sender(tx: Union[SignedEthTx, str]) -> str:
@@ -72,4 +73,4 @@ def recover_sender(tx: Union[SignedEthTx, str]) -> str:
     else:
         t = cast(str, tx)
 
-    return Account.recoverTransaction(t)
+    return cast(str, Account.recoverTransaction(t))
