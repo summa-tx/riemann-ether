@@ -7,8 +7,8 @@ import websockets
 
 from ether import transactions
 
-from asyncio import Future
 from logging import Logger
+from asyncio import Future
 from websockets.client import WebSocketClientProtocol
 from ether.ether_types import EthTx, Receipt, RPCRequest
 from ether.ether_types import RPCSubscription, SignedEthTx, UnparsedEtherEvent
@@ -191,7 +191,6 @@ class BaseRPC(metaclass=abc.ABCMeta):
         return await self.get_logs(address=address, topics=topics)
 
     async def broadcast(self, tx: str) -> str:
-
         '''Broadcast a transaction to the network'''
         if tx[0:2] != '0x':
             tx = f'0x{tx}'
@@ -304,17 +303,21 @@ class WSRPC(BaseRPC):
         if not hasattr(self, '_ws'):
             return
 
-        await self._ws.close()
-
         if not self.connected:
             return
+
+        await self._ws.close()
         self.connected = False
-        self._ping_task.cancel()
-        self._handle_task.cancel()
-        await asyncio.gather(
-            self._ping_task,
-            self._handle_task,
-            return_exceptions=True)
+
+        # prevent error loops
+        if not self._ping_task.cancelled():
+            self._ping_task.cancel()
+            await self._ping_task
+
+        # prevent error loops
+        if not self._handle_task.cancel():
+            self._handle_task.cancel()
+            await self._handle_task
 
     def get_pending(
             self) -> Tuple[int, List[RPCRequest], List[RPCSubscription]]:
@@ -372,7 +375,7 @@ class WSRPC(BaseRPC):
                 await asyncio.sleep(15)
         except websockets.exceptions.ConnectionClosed:
             if self.connected:
-                await self.close()
+                self.close()
 
     async def _RPC(
             self,
