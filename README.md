@@ -1,8 +1,10 @@
 ### riemann-ether
 
-This is a simple library for building, signing, and reading logs from Ether transactions quickly
+This is a simple library for building, signing, and reading logs from Ether
+transactions quickly. It also includes geth and infura RPC clients.
 
-It is in early stages of development
+It is intended for quickly developing MVP applications, and may not be suitable
+for production applications or use at scale.
 
 ### Development
 
