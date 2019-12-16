@@ -226,7 +226,7 @@ class BaseRPC(metaclass=abc.ABCMeta):
         '''Preflight a transaction'''
         if sender is None and 'v' in tx:
             sender = transactions.recover_sender(cast(SignedEthTx, tx))
-        else:
+        if sender is None:
             sender = '0x' + '11' * 20
 
         res = await self._RPC(
