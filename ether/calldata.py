@@ -1,29 +1,20 @@
-import eth_abi
+from ether import abi, crypto
 
-from ether import abi
-
-from typing import Any, cast, Dict, List
+from typing import Any, Dict, List
 from ether.ether_types import EthABI
 
 
-def _convert_bytes_types(
-        function: Dict[str, Any],
-        function_args: List[Any]) -> List[Any]:
+def make_selector(f: Dict[str, Any]) -> bytes:
     '''
-    Converts any string-encoded bytes to bytestrings
-    Why doesn't eth_abi do this :(
+    Parses a function ABI into a function selector
+    This is the first 4 bytes of the hash of the signature
+
+    Args:
+        f (dict): the function ABI
+    Returns:
+        (bytes): the function selector
     '''
-    converted_args = []
-    inputs = function['inputs']
-    for i in range(len(function_args)):
-        if ('bytes' in inputs[i]['type']
-                and type(function_args[i]) is str
-                and function_args[i][:2] == '0x'):
-            converted_args.append(
-                bytes.fromhex(cast(str, function_args[i][2:])))
-        else:
-            converted_args.append(function_args[i])
-    return converted_args
+    return crypto.keccak256(abi.make_signature(f).encode('utf8'))[:4]
 
 
 def _encode_function_args(
@@ -33,33 +24,15 @@ def _encode_function_args(
     encodes function arguments into a data blob
     This gets prepended with the function selector
     '''
-    tmp_args = _convert_bytes_types(function, function_args)
-    return cast(bytes, eth_abi.encode_single(
-        abi.make_type_list(function),
-        tmp_args))
+    return abi.encode_tuple(
+        abi._make_type_tuple(function),
+        function_args)
 
 
-def _matches_args(
-        function: Dict[str, Any],
-        function_args: List[Any]) -> bool:
-    '''
-    Checks whether eth_abi will encode each argument with the expected type
-    '''
-    for i in range(len(function_args)):
-        inputs = function['inputs']
-        if not eth_abi.is_encodable(inputs[i]['type'], function_args[i]):
-            # account for hex-encoded bytes. why doesn't eth_abi do this?
-            if ('bytes' not in inputs[i]['type']
-                    or type(function_args[i]) is not str
-                    or function_args[i][:2] != '0x'):
-                return False
-    return True
-
-
-def _find_function(
+def _find_by_name(
         function_name: str,
-        function_args: List[Any],
-        abi: EthABI) -> Dict[str, Any]:
+        num_args: int,
+        abi: EthABI) -> List[Dict[str, Any]]:
     '''
     Find a function within the ABI based on
     a) its name
@@ -68,14 +41,12 @@ def _find_function(
     '''
     funcs = [e for e in abi if e['type'] == 'function']
     funcs = [f for f in funcs if f['name'] == function_name]
-    funcs = [f for f in funcs if len(f['inputs']) == len(function_args)]
-    funcs = [f for f in funcs if _matches_args(f, function_args)]
+    funcs = [f for f in funcs if len(f['inputs']) == num_args]
 
     if len(funcs) == 0:
         raise ValueError('no functions with acceptable interface')
-    elif len(funcs) != 1:
-        raise ValueError('multiple functions with acceptable interface.')
-    return funcs[0]
+
+    return funcs
 
 
 def encode_call(function: Dict[str, Any], function_args: List[Any]) -> bytes:
@@ -83,13 +54,22 @@ def encode_call(function: Dict[str, Any], function_args: List[Any]) -> bytes:
     Makes the data blob for a solidity contract function call
     This is a 4 byte selector, and then any number of bytes
     '''
-    return (abi.make_selector(function)
+    return (make_selector(function)
             + _encode_function_args(function, function_args))
 
 
-def call(function_name: str, function_args: List[Any], abi: EthABI) -> bytes:
+def call(
+        function_name: str,
+        function_args: List[Any],
+        contract_abi: EthABI) -> bytes:
     '''
     Call a function by name
     '''
-    function = _find_function(function_name, function_args, abi)
-    return encode_call(function, function_args)
+    functions = _find_by_name(function_name, len(function_args), contract_abi)
+    for function in functions:
+        # return the first one that works
+        try:
+            return encode_call(function, function_args)
+        except abi.ABIEncodingError:
+            continue
+    raise ValueError('no functions with acceptable interface')

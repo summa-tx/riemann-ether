@@ -9,6 +9,8 @@ class TestABI(unittest.TestCase):
 
     def test_decode_event(self):
         for i in range(len(helpers.weth_transfers)):
+            print(helpers.weth_transfers[i])
+            print(helpers.weth_parsed[i])
             decoded = events.decode_event(
                 helpers.weth_transfers[i],
                 helpers.weth_json)
@@ -21,15 +23,3 @@ class TestABI(unittest.TestCase):
                 'nope',
                 [e for e in helpers.weth_json if e['type'] == 'event'])
         self.assertIn('Topic not found', str(context.exception))
-
-    def test_process_value(self):
-        test_vectors = (
-            (('address', '0x' + '20' * 32), '0x' + '20' * 20),
-            (('bytes', '00' * 32), b'\x00' * 32),
-            (('uint', '80' + '00' * 31), 2 ** 255),  # test the sign bit
-            (('int', '80' + '00' * 31), -1 * 2 ** 255),  # test the sign bit
-            (('bool', '00' * 32), False))
-        for v in test_vectors:
-            self.assertEqual(
-                events._process_value(*v[0]),
-                v[1])

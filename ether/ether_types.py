@@ -10,11 +10,11 @@ EthABI = List[Dict[str, Any]]
 
 
 class EthTx(TypedDict):
+    nonce: int
+    gasPrice: int
+    gas: int
     to: str
     value: int
-    gas: int
-    gasPrice: int
-    nonce: int
     data: bytes
 
 
@@ -29,8 +29,8 @@ class CeloTx(EthTx, CeloMod):
 
 class SignedEthTx(EthTx):
     v: int
-    s: int
     r: int
+    s: int
 
 
 class SignedCeloTx(SignedEthTx, CeloMod):
