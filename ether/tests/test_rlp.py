@@ -39,14 +39,8 @@ class TestRLP(unittest.TestCase):
 
     def test_decode(self):
         for v in self.vectors:
-            print('name', v[2])
-            print('input', v[1])
-
             (a, b) = v[0], rlp.decode(v[1])
-            print('theirs', a)
-            print('ours', b)
             self.assertEqual(a, b)
-            print('')
 
     def test_roundtrip(self):
         for v in self.vectors:

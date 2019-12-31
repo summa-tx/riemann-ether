@@ -9,12 +9,9 @@ class TestABI(unittest.TestCase):
 
     def test_decode_event(self):
         for i in range(len(helpers.weth_transfers)):
-            print(helpers.weth_transfers[i])
-            print(helpers.weth_parsed[i])
             decoded = events.decode_event(
                 helpers.weth_transfers[i],
                 helpers.weth_json)
-            # print(decoded)
             self.assertEqual(decoded, helpers.weth_parsed[i])
 
     def test_match_topic0_to_event(self):

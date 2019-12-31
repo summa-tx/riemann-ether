@@ -65,8 +65,6 @@ def serialize(t: EthTx) -> bytes:
         rlp.i2be_rlp_padded(s)
     ]
 
-    print(to_serialize)
-
     return rlp.encode(to_serialize)
 
 

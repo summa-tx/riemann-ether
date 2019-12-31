@@ -163,9 +163,6 @@ def _decode_dynamic_array(type_str: str, b: bytes) -> List:
     '''Decodes the body (tail portion) of a complex type'''
     inner = _inner_type(type_str)
     length = _decode_uint(b[:32])
-
-    print(b)
-
     type_list = [inner] * length
     return decode_many(type_list, b[32:])
 
