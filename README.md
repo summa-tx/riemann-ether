@@ -35,7 +35,7 @@ sender_address = transactions.recover_sender(signed_tx)
 import json
 from ether import calldata
 
-abi = json.loads('SOME_ABI_DATA_HERE')
+abi = json.loads(f'{SOME_ABI_DATA_HERE}')
 
 tx_data = calldata.call('transfer', ['0x' + '20' * 20, 60000000], abi)
 ```
@@ -51,12 +51,15 @@ decoded_event = events.decode_event(event, abi)
 ```
 
 ```python
-from ether import infura
-async def do_the_thing():
-    await infura.make_client('mainnet', 'YOUR_PROJECT_ID')
-    balance = await infura.get_balance(address='0x00000...', network='mainnet')
-    logs = await infura.get_past_contract_logs(
-        address='0x000...',
-        topics=['0x...'],
-        network='mainnet')
+from ether import ethrpc
+
+infura_client = ethrpc.get_client('ropsten', infura_key=f'{INFURA_KEY}')
+infura_https = ethrpc.get_client(
+    'ropsten', 
+    infura_key=f'{INFURA_KEY}',
+    force_https=True)
+node_client = ethrpc.get_client('ropsten', uri=f'{URI}:{PORT}')
+
+async def do(client):
+  rpc_client =
 ```
