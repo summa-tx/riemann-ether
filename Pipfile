@@ -14,13 +14,13 @@ twine = "*"
 flake8 = "*"
 coverage = "*"
 pytest-cov = "*"
+atomicwrites = "*"
 
 [packages]
-eth-keys = "==0.2.1"
-eth-account = "==0.3.0"
 websockets = "*"
 pycryptodomex = "*"
 aiohttp = "*"
+eth-keys = "==0.3.1"
 
 [requires]
 python_version = "3.6"

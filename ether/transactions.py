@@ -1,25 +1,31 @@
-from eth_utils import to_checksum_address
-from eth_account import Account
-
-from ether import rlp
+from ether import crypto, rlp
 
 from ether.ether_types import EthSig, EthTx, SignedEthTx, UnsignedEthTx
 
-from typing import cast, List, Union
+from typing import cast, List
+
+
+def hash_to_sign(tx: EthTx) -> bytes:
+    '''Get the hash to sign. keccak256 of serialized tx with chainId'''
+    return crypto.keccak256(serialize(strip_signature(tx)))
+
+
+def strip_signature(tx: EthTx) -> UnsignedEthTx:
+    '''Strip the signature from a tx. Recover chainId from v if necessary'''
+    tmp_tx = cast(dict, tx).copy()
+    if 'v' in tx:
+        tmp_tx.pop('r')
+        tmp_tx.pop('s')
+        v = tmp_tx.pop('v')
+        tmp_tx['chainId'] = (v - (35 if v % 2 else 36)) // 2
+    return cast(UnsignedEthTx, tmp_tx)
 
 
 def get_signature(tx: UnsignedEthTx, key: bytes) -> EthSig:
-    '''
-    Gets a signature for an ethereum transaction under a specified key
-    '''
+    '''Get a signature on a tx under a certain key'''
     if not tx['chainId']:
         raise ValueError('This library enforces EIP-155.')
-
-    tmp_tx = tx.copy()
-    tmp_tx['to'] = to_checksum_address(tx['to'])
-    t = Account.signTransaction(tmp_tx, key)
-
-    return t['v'], t['r'], t['s']
+    return crypto.sign(hash_to_sign(tx), key)
 
 
 def sign_transaction(
@@ -105,13 +111,8 @@ def deserialize_hex(hex_raw: str) -> EthTx:
     return deserialize(bytes.fromhex(h))
 
 
-def recover_sender(tx: Union[SignedEthTx, str]) -> str:
-    '''
-    Recover the sender from a signed ethereum transaction
-    '''
-    if type(tx) == dict:
-        t = serialize_hex(cast(SignedEthTx, tx))
-    else:
-        t = cast(str, tx)
-
-    return cast(str, Account.recoverTransaction(t))
+def recover_sender(tx: SignedEthTx) -> str:
+    pubkey = crypto.recover_pubkey(
+        (tx['v'], tx['r'], tx['s']),
+        hash_to_sign(tx))
+    return crypto.pub_to_addr(pubkey)

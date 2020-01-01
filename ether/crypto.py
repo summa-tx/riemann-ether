@@ -1,8 +1,9 @@
 from Cryptodome.Hash import keccak
 
-from eth_keys.backends.native import ecdsa
+from eth_keys import datatypes as eth_ecdsa
 
-from typing import cast
+from typing import Callable, cast
+from ether.ether_types import EthSig
 
 
 def keccak256(msg: bytes) -> bytes:
@@ -48,13 +49,17 @@ def uncompress_pubkey(pubkey: bytes) -> bytes:
 
 
 def compress_pubkey(pubkey: bytes) -> bytes:
-    parity = (pubkey[-1] & 1) + 2
-    compressed = bytes([parity]) + pubkey[:32]
+    '''Take a an uncompressed pubkey, return the compressed representation'''
+    pub = pubkey[1:] if len(pubkey) == 65 else pubkey
+    parity = (pub[-1] & 1) + 2
+    compressed = bytes([parity]) + pub[:32]
     return compressed
 
 
 def priv_to_pub(privkey: bytes) -> bytes:
-    return cast(bytes, ecdsa.private_key_to_public_key(privkey))
+    '''Return the pubkey that corresponds to a private key'''
+    pub = eth_ecdsa.PublicKey.from_private(private_key=privkey)
+    return cast(bytes, pub.to_bytes())
 
 
 def pub_to_addr(pubkey: bytes) -> str:
@@ -65,3 +70,36 @@ def pub_to_addr(pubkey: bytes) -> str:
 def priv_to_addr(privkey: bytes) -> str:
     '''Make address from privkey'''
     return pub_to_addr(priv_to_pub(privkey))
+
+
+def recover_pubkey(signature: EthSig, digest: bytes) -> bytes:
+    '''Recovers the public key from a signature and message'''
+    sig = eth_ecdsa.Signature(vrs=signature)
+    pub = sig.recover_public_key_from_msg_hash(digest)
+    return cast(bytes, pub.to_bytes())
+
+
+def sign_hash(digest: bytes, privkey: bytes) -> EthSig:
+    '''Sign a digest'''
+    priv = eth_ecdsa.PrivateKey(privkey)
+    sig = priv.sign_msg_hash(digest)
+    return cast(EthSig, sig.vrs())
+
+
+def sign(
+        message: bytes,
+        privkey: bytes,
+        algo: Callable[[bytes], bytes] = keccak256) -> EthSig:
+    '''
+    Gets a signature on a message digest of a message
+    '''
+    return sign_hash(algo(message), privkey)
+
+
+def sign_message(
+        message: bytes,
+        privkey: bytes,
+        algo: Callable[[bytes], bytes] = keccak256) -> EthSig:
+    '''Sign a message using the ethereum signed message format'''
+    prefixed = b''.join([b'\x19Ethereum Signed Message:\n', message])
+    return sign(prefixed, privkey)
