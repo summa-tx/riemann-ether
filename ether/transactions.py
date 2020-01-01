@@ -47,7 +47,7 @@ def sign_transaction(
 
 
 def serialize_hex(t: EthTx) -> str:
-    return serialize(t).hex()
+    return f'0x{serialize(t).hex()}'
 
 
 def serialize(t: EthTx) -> bytes:

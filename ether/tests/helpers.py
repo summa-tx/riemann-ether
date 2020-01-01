@@ -7,6 +7,9 @@ with open('ether/tests/weth.abi.json', 'r') as f:
 with open('ether/tests/rlptest.json', 'r') as f:
     rlp_json = json.loads(f.read())
 
+with open('ether/tests/txns.json', 'r') as f:
+    txn_json = json.loads(f.read())
+
 
 weth_transfers = [
     {"address":"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2","topics":["0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925","0x000000000000000000000000009be56dd91808b2ab35959a65245732c73fe871","0x00000000000000000000000014fbca95be7e99c15cc2996c6c9d841e54b79425"],"data":"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","blockNumber":"0x488800","timeStamp":"0x5a377f15","gasPrice":"0x560de0700","gasUsed":"0xb848","logIndex":"0x2a","transactionHash":"0xb1b06122e812801972f70c899188e1ff0d61550f9b561188ec6b37c55da5014c","transactionIndex":"0x36"},

@@ -1,9 +1,13 @@
 from Cryptodome.Hash import keccak
-
-from eth_keys import datatypes as eth_ecdsa
+import warnings
 
 from typing import Callable, cast
 from ether.ether_types import EthSig
+
+# suppress load warning
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    from eth_keys import datatypes as eth_ecdsa
 
 
 def keccak256(msg: bytes) -> bytes:
