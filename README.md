@@ -8,7 +8,7 @@ for production applications or use at scale.
 
 ### Development
 
-Clone and then run `pipenv install`
+Clone and then run `pipenv install -d`
 
 #### Basic Usage
 
@@ -55,7 +55,7 @@ from ether import ethrpc
 
 infura_client = ethrpc.get_client('ropsten', infura_key=f'{INFURA_KEY}')
 infura_https = ethrpc.get_client(
-    'ropsten', 
+    'ropsten',
     infura_key=f'{INFURA_KEY}',
     force_https=True)
 node_client = ethrpc.get_client('ropsten', uri=f'{URI}:{PORT}')

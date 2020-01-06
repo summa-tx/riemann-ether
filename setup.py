@@ -10,7 +10,7 @@ reqs = [
 
 setup(
     name='riemann-ether',
-    version='5.0.1',
+    version='5.0.2',
     description=('App prototyping library for Ethereum-based chains'),
     url='https://github.com/summa-tx/riemann-ether',
     author='James Prestwich',

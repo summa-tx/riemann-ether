@@ -62,7 +62,8 @@ def compress_pubkey(pubkey: bytes) -> bytes:
 
 def priv_to_pub(privkey: bytes) -> bytes:
     '''Return the pubkey that corresponds to a private key'''
-    pub = eth_ecdsa.PublicKey.from_private(private_key=privkey)
+    priv = eth_ecdsa.PrivateKey(privkey)
+    pub = eth_ecdsa.PublicKey.from_private(private_key=priv)
     return cast(bytes, pub.to_bytes())
 
 
