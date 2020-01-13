@@ -63,13 +63,22 @@ def serialize(t: EthTx) -> bytes:
         rlp.i2be_rlp_padded(tx['nonce']),
         rlp.i2be_rlp_padded(tx['gasPrice']),
         rlp.i2be_rlp_padded(tx['gas']),
+    ]
+
+    # Add Celo-specific if necessary
+    if 'gasCurrency' in tx:
+        to_serialize.append(rlp.i2be_rlp_padded(tx['gasCurrency']))
+    if 'gasFeeRecipient' in tx:
+        to_serialize.append(rlp.i2be_rlp_padded(tx['gasCurrency']))
+
+    to_serialize.extend([
         bytes.fromhex(tx['to'][2:]),
         rlp.i2be_rlp_padded(tx['value']),
         tx['data'],
         rlp.i2be_rlp_padded(v),
         rlp.i2be_rlp_padded(r),
         rlp.i2be_rlp_padded(s)
-    ]
+    ])
 
     return rlp.encode(to_serialize)
 
@@ -116,3 +125,7 @@ def recover_sender(tx: SignedEthTx) -> str:
         (tx['v'], tx['r'], tx['s']),
         hash_to_sign(tx))
     return crypto.pub_to_addr(pubkey)
+
+
+def tx_id_of(t: EthTx) -> bytes:
+    return crypto.keccak256(serialize(t))
