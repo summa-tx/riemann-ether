@@ -84,16 +84,20 @@ def serialize(t: EthTx) -> bytes:
 
 
 def deserialize(raw: bytes) -> EthTx:
+    '''Deserialize, including Celo transactions'''
     decoded = cast(List[bytes], rlp.decode(raw))
 
     # post-processing step
     nonce = rlp.be2i_rlp(decoded[0])
     gas_price = rlp.be2i_rlp(decoded[1])
     gas = rlp.be2i_rlp(decoded[2])
-    to = f'0x{decoded[3].hex()}'
-    value = rlp.be2i_rlp(decoded[4])
-    data = decoded[5]
-    (v, r, s) = [rlp.be2i_rlp(i) for i in decoded[6:]]
+
+    # There may be Celo in the middle
+    # but we know these relative to the end of the TX.
+    to = f'0x{decoded[-6].hex()}'
+    value = rlp.be2i_rlp(decoded[-5])
+    data = decoded[-4]
+    (v, r, s) = [rlp.be2i_rlp(i) for i in decoded[-3:]]
 
     tx = {
         'nonce': nonce,
@@ -104,6 +108,11 @@ def deserialize(raw: bytes) -> EthTx:
         'data': data
     }
 
+    # Celo txns are identified by the extra elements
+    if len(decoded) > 9:
+        tx['gasCurrency'] = rlp.be2i_rlp(decoded[3])
+        tx['gasFeeRecipient'] = rlp.be2i_rlp(decoded[4])
+
     if r == 0:  # unsigned, but serialized with chainId as v
         tx['chainId'] = v
         return cast(UnsignedEthTx, tx)
@@ -112,6 +121,7 @@ def deserialize(raw: bytes) -> EthTx:
     tx['v'] = v
     tx['r'] = r
     tx['s'] = s
+
     return cast(SignedEthTx, tx)
 
 
