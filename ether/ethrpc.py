@@ -5,13 +5,13 @@ import aiohttp
 import asyncio
 import websockets
 
-from ether import transactions
+from ether.transactions import EthTx, SignedEthTx
 
 from logging import Logger
 from asyncio import Future
 from websockets.client import WebSocketClientProtocol
-from ether.ether_types import EthTx, Receipt, RPCRequest
-from ether.ether_types import RPCSubscription, SignedEthTx, UnparsedEtherEvent
+from ether.ether_types import Receipt, RPCRequest
+from ether.ether_types import RPCSubscription, UnparsedEtherEvent
 from typing import Any, cast, Dict, Generator, List, Optional, Tuple, Union
 
 
@@ -111,14 +111,14 @@ class BaseRPC(metaclass=abc.ABCMeta):
         ...
 
     @staticmethod
-    def _encode_int(v: Any) -> Any:
+    def _encode_if_int(v: Any) -> Any:
         if isinstance(v, int):
             return hex(cast(int, v))
         return v
 
     @staticmethod
     def _shallow_prep_params(params: List[Any]) -> List[Any]:
-        return list(map(BaseRPC._encode_int, params))
+        return list(map(BaseRPC._encode_if_int, params))
 
     async def send_transaction(
             self,
@@ -128,21 +128,16 @@ class BaseRPC(metaclass=abc.ABCMeta):
         if hasattr(self, 'infura_key'):
             raise RuntimeError('Tried to sign tx with infura connection')
 
-        param_obj = cast(dict, tx.copy())
-        param_obj['from'] = from_addr
+        param = cast(dict, tx.to_json_dict())
+        param['from'] = from_addr
+        param['data'] = f'0x{param["data"].hex()}'
 
-        if 'data' in param_obj:
-            param_obj['data'] = f'0x{param_obj["data"].hex()}'
-
-        if 'chainId' in param_obj:
-            param_obj.pop('chainId')
-
-        for key, value in param_obj.items():
-            param_obj[key] = BaseRPC._encode_int(value)
+        for key, value in param.items():
+            param[key] = BaseRPC._encode_if_int(value)
 
         res = await self._RPC(
             method='eth_sendTransaction',
-            params=[param_obj]
+            params=[param]
         )
 
         return cast(str, res)
@@ -154,7 +149,7 @@ class BaseRPC(metaclass=abc.ABCMeta):
         '''Gets the number of wei at an address'''
         res = await self._RPC(
             'eth_getBalance',
-            [address, BaseRPC._encode_int(block)])
+            [address, BaseRPC._encode_if_int(block)])
         return int(res, 16)
 
     async def get_logs(
@@ -176,8 +171,8 @@ class BaseRPC(metaclass=abc.ABCMeta):
         if blockhash:
             params['blockhash'] = blockhash
         else:
-            params['fromBlock'] = BaseRPC._encode_int(from_block)
-            params['toBlock'] = BaseRPC._encode_int(to_block)
+            params['fromBlock'] = BaseRPC._encode_if_int(from_block)
+            params['toBlock'] = BaseRPC._encode_if_int(to_block)
 
         events = await self._RPC(method='eth_getLogs', params=[params])
 
@@ -224,9 +219,10 @@ class BaseRPC(metaclass=abc.ABCMeta):
             tx: EthTx,
             sender: Optional[str] = None) -> str:
         '''Preflight a transaction'''
-        if sender is None and 'v' in tx:
-            sender = transactions.recover_sender(cast(SignedEthTx, tx))
-        if sender is None:
+        try:
+            # if it doesn't have that name
+            sender = cast(SignedEthTx, tx).recover_sender()
+        except AttributeError:
             sender = '0x' + '11' * 20
 
         res = await self._RPC(
@@ -234,8 +230,8 @@ class BaseRPC(metaclass=abc.ABCMeta):
             params=[
                 {
                     'from': sender,
-                    'to': tx['to'],
-                    'data': f'0x{tx["data"].hex()}'
+                    'to': tx.to,
+                    'data': f'0x{tx.data.hex()}'
                 },
                 'latest'  # block height parameter
             ])

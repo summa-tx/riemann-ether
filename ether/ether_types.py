@@ -4,45 +4,25 @@ from asyncio import Future
 from mypy_extensions import TypedDict
 from typing import Any, Dict, List, Optional, Tuple
 
+
 EthSig = Tuple[int, int, int]
 
 EthABI = List[Dict[str, Any]]
 
 
-class EthTx(TypedDict):
-    nonce: int
-    gasPrice: int
-    gas: int
+class EthTxDict(TypedDict):
+    '''Suitable for jsonrpc'''
+    nonce: str
+    gasPrice: str
+    gas: str
     to: str
-    value: int
-    data: bytes
+    value: str
+    data: str
 
 
-class CeloMod(TypedDict):
+class CeloTxDict(EthTxDict):
     gasCurrency: Optional[str]
     gasFeeRecipient: Optional[str]
-
-
-class CeloTx(EthTx, CeloMod):
-    ...
-
-
-class SignedEthTx(EthTx):
-    v: int
-    r: int
-    s: int
-
-
-class SignedCeloTx(SignedEthTx, CeloMod):
-    ...
-
-
-class UnsignedEthTx(EthTx):
-    chainId: int
-
-
-class UnsignedCeloTx(UnsignedEthTx, CeloMod):
-    ...
 
 
 class EtherEvent(TypedDict):
