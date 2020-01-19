@@ -1,6 +1,6 @@
 import unittest
 
-from ether import abi, transactions
+from ether import transactions
 
 from ether.tests import helpers
 
@@ -23,11 +23,6 @@ class TestTxns(unittest.TestCase):
             r=int(j['tx']['r'], 16),
             s=int(j['tx']['s'], 16)
         )
-        # vector['call']['args'] = [bytes.fromhex(i[2:]) for i in j['call']['args']]
-        # vector['call']['args'] = [
-        #     abi.decode_many(v['call']['type_list'],
-        #                     b''.join(v['call']['args']))
-        #     ]
         return vector
 
     @classmethod

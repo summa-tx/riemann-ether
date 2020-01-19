@@ -69,7 +69,7 @@ def priv_to_pub(privkey: bytes) -> bytes:
 
 def pub_to_addr(pubkey: bytes) -> str:
     '''Eth addr is last 20 bytes of keccak256 of pubkey'''
-    return '0x' + keccak256(pubkey)[-20:].hex()
+    return f'0x{keccak256(pubkey)[-20:].hex()}'
 
 
 def priv_to_addr(privkey: bytes) -> str:

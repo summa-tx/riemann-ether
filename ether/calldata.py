@@ -32,14 +32,14 @@ def _encode_function_args(
 def _find_by_name(
         function_name: str,
         num_args: int,
-        abi: EthABI) -> List[Dict[str, Any]]:
+        contract_abi: EthABI) -> List[Dict[str, Any]]:
     '''
     Find a function within the ABI based on
     a) its name
     b) the number of args
     c) whether the args provided match that function's interface
     '''
-    funcs = [e for e in abi if e['type'] == 'function']
+    funcs = [e for e in contract_abi if e['type'] == 'function']
     funcs = [f for f in funcs if f['name'] == function_name]
     funcs = [f for f in funcs if len(f['inputs']) == num_args]
 
@@ -65,7 +65,10 @@ def call(
     '''
     Call a function by name
     '''
-    functions = _find_by_name(function_name, len(function_args), contract_abi)
+    functions = _find_by_name(
+        function_name,
+        len(function_args),
+        contract_abi)
     for function in functions:
         # return the first one that works
         try:

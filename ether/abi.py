@@ -107,11 +107,16 @@ def _decode_int(b: bytes) -> int:
     return int.from_bytes(b, 'big', signed=True)
 
 
-def _encode_fixed_bytes(b: bytes) -> bytes:
-    if not isinstance(b, bytes):
-        raise ABIEncodingError(f'Expected bytes. Got {type(b)}')
-    padding = bytes(32 - (len(b) % 32))
-    return b''.join([b, padding])
+def _encode_fixed_bytes(b: Union[str, bytes]) -> bytes:
+    if not isinstance(b, bytes) and not isinstance(b, str):
+        raise ABIEncodingError(f'Expected string or bytes. Got {type(b)}')
+    if isinstance(b, str):
+        decoded = b if b[:2] != '0x' else b[2:]
+        payload = bytes.fromhex(decoded)
+    else:
+        payload = cast(bytes, b)
+    padding = bytes(32 - (len(payload) % 32))
+    return b''.join([payload, padding])
 
 
 @single_item_decoder
@@ -225,7 +230,7 @@ def encode(
     elif '[' in type_str:
         return _encode_fixed_array(type_str, cast(list, arg)), b''
 
-    elif 'bytes' in type_str and int(type_str[5:]) < 32:
+    elif 'bytes' in type_str and int(type_str[5:]) <= 32:
         a = cast(bytes, arg)
         if len(a) > 32:
             raise ABIEncodingError(f'Too long for fixed encoding: {len(a)}B')
