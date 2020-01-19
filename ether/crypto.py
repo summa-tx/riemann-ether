@@ -79,7 +79,12 @@ def priv_to_addr(privkey: bytes) -> str:
 
 def recover_pubkey(signature: EthSig, digest: bytes) -> bytes:
     '''Recovers the public key from a signature and message'''
-    sig = eth_ecdsa.Signature(vrs=signature)
+    # bullshit in the underlying eth library
+    # needs to be 0 if v is odd, 1 if v is even
+    normalized_v = (signature[0] + 1) % 2
+    normalized_sig = (normalized_v, signature[1], signature[2])
+
+    sig = eth_ecdsa.Signature(vrs=normalized_sig)
     pub = sig.recover_public_key_from_msg_hash(digest)
     return cast(bytes, pub.to_bytes())
 

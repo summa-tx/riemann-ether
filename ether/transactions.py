@@ -194,7 +194,12 @@ class UnsignedEthTx(EthTx):
 
     def get_signature(self, key: bytes) -> EthSig:
         '''Get a signature on a tx under a certain key'''
-        return crypto.sign(self.sighash(), key)
+        # NB: the underlying signing library sets v to opposite parity
+        #     0 = odd
+        #     1 = even
+        (v, r, s) = crypto.sign_hash(self.sighash(), key)
+        v += self.chainId * 2 + 35
+        return (v, r, s)
 
     def serialize(self) -> bytes:
         '''Serialize the transaction to raw bytes.'''
