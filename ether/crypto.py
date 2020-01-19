@@ -88,7 +88,7 @@ def sign_hash(digest: bytes, privkey: bytes) -> EthSig:
     '''Sign a digest'''
     priv = eth_ecdsa.PrivateKey(privkey)
     sig = priv.sign_msg_hash(digest)
-    return cast(EthSig, sig.vrs())
+    return cast(EthSig, sig.vrs)
 
 
 def sign(
