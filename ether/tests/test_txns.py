@@ -31,10 +31,6 @@ class TestTxns(unittest.TestCase):
 
     def test_deser(self):
         for v in self.vectors:
-            print(
-                transactions.SignedEthTx.deserialize_hex(v['raw']),
-                v['tx_obj']
-            )
             self.assertEqual(
                 transactions.SignedEthTx.deserialize_hex(v['raw']),
                 v['tx_obj']

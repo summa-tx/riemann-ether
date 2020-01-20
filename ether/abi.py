@@ -115,7 +115,10 @@ def _encode_fixed_bytes(b: Union[str, bytes]) -> bytes:
         payload = bytes.fromhex(decoded)
     else:
         payload = cast(bytes, b)
-    padding = bytes(32 - (len(payload) % 32))
+
+    padding = b''
+    if len(payload) % 32 != 0:
+        padding = bytes(32 - (len(payload) % 32))
     return b''.join([payload, padding])
 
 
@@ -125,10 +128,15 @@ def _decode_fixed_bytes(b: bytes, type_str: str) -> bytes:
     return b[:length]
 
 
-def _encode_dynamic_bytes(b: bytes) -> bytes:
+def _encode_dynamic_bytes(b: Union[str, bytes]) -> bytes:
     '''Returns JUST the tail portion'''
+    length = len(b)
+    if isinstance(b, str):
+        length = len(b) // 2
+        if b[:2] == '0x':
+            length -= 1
     payload = _encode_fixed_bytes(b)
-    return b''.join([_encode_uint(len(b)), payload])
+    return b''.join([_encode_uint(length), payload])
 
 
 def _decode_dynamic_bytes(b: bytes) -> bytes:
