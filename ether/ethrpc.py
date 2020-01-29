@@ -219,11 +219,12 @@ class BaseRPC(metaclass=abc.ABCMeta):
             tx: EthTx,
             sender: Optional[str] = None) -> str:
         '''Preflight a transaction'''
-        try:
-            # if it doesn't have that name
-            sender = cast(SignedEthTx, tx).recover_sender()
-        except AttributeError:
-            sender = '0x' + '11' * 20
+        if sender is None:
+            try:
+                # if it doesn't have that name
+                sender = cast(SignedEthTx, tx).recover_sender()
+            except AttributeError:
+                sender = '0x' + '11' * 20
 
         res = await self._RPC(
             method='eth_call',
