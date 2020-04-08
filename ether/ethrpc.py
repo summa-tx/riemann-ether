@@ -130,7 +130,6 @@ class BaseRPC(metaclass=abc.ABCMeta):
 
         param = cast(dict, tx.to_json_dict())
         param['from'] = from_addr
-        param['data'] = f'0x{param["data"].hex()}'
 
         for key, value in param.items():
             param[key] = BaseRPC._encode_if_int(value)
